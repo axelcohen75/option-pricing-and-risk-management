@@ -35,15 +35,6 @@
     <!-- ─── LEFT SIDEBAR ─── -->
     <div class="pricer-sidebar">
 
-        <!-- Futures price display -->
-        <div class="panel">
-            <div class="lbl">FUTURE</div>
-            <div class="forward-result mt-8">
-                <div class="forward-value" id="futures-f-display" style="font-size:20px">—</div>
-            </div>
-            <div class="hint mt-8">Black-76 prices options directly on the futures price F — no underlying spot or cost-of-carry step.</div>
-        </div>
-
         <!-- Parameters -->
         <div class="panel">
             <div class="lbl">PARAMETERS</div>
@@ -93,8 +84,10 @@
             <div class="lbl">STRATEGIES</div>
             <div class="flex-row mt-8">
                 <div class="flex-1"><select id="strategy-select"></select></div>
-                <button class="btn btn-accent" onclick="applyStrategy()">APPLY</button>
+                <button class="btn btn-ghost" onclick="buildStrategy()">BUILD</button>
             </div>
+            <div id="staging-container" class="mt-8"></div>
+            <button id="staging-push" class="btn btn-accent btn-full mt-8" onclick="pushStagingToPortfolio()" style="display:none">ADD TO PORTFOLIO</button>
         </div>
 
         <!-- New Position -->

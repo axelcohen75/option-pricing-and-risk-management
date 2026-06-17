@@ -143,9 +143,23 @@ input[type="range"]::-moz-range-thumb {
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .flex-row { display: flex; gap: 8px; align-items: flex-end; }
 .flex-1 { flex: 1; }
+.mt-6 { margin-top: 6px; }
 .mt-8 { margin-top: 8px; }
 .mt-10 { margin-top: 10px; }
 .mt-12 { margin-top: 12px; }
+
+/* ─── Strategy staging rows ─── */
+.stage-row { background: var(--card); border: 1px solid var(--input-border); border-radius: 6px; padding: 7px 8px; margin-bottom: 6px; }
+.stage-line { display: flex; gap: 6px; align-items: center; }
+.stage-line select { flex: 1; font-size: 10px; padding: 4px 6px; padding-right: 22px; }
+.stage-tag { font-size: 9px; color: var(--text-dim); letter-spacing: 0.5px; }
+.stage-k { width: 78px !important; text-align: right; font-size: 11px; padding: 4px 6px; color: var(--accent); font-weight: 600; }
+.stage-q { width: 50px !important; text-align: right; font-size: 11px; padding: 4px 6px; }
+.stage-rm {
+    background: none; border: none; color: var(--text-dim); cursor: pointer;
+    font-size: 15px; line-height: 1; padding: 0 4px; font-family: var(--font);
+}
+.stage-rm:hover { color: var(--danger); }
 
 /* ─── Portfolio leg tags ─── */
 .leg-count { background: var(--accent); color: #04231d; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 700; }

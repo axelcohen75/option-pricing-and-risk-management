@@ -191,8 +191,6 @@ let _lastAutoStrike = null;
 
 function onFuturesChange() {
     const F = sliderVal('futures-price');
-    const el = $('futures-f-display');
-    if (el) el.textContent = `F = ${F.toFixed(2)} ${UNIT}`;
 
     // Keep the plot window centered on F
     const sMin = numVal('spot-min'), sMax = numVal('spot-max');
@@ -258,14 +256,82 @@ function clearLegs() {
     updateCharts();
 }
 
-function applyStrategy() {
+// ─── Strategy staging (configure strikes before pushing to the book) ──────────
+
+let staging = [];
+
+function buildStrategy() {
     const name = $('strategy-select').value;
     const F = sliderVal('futures-price');
-    if (STRATEGIES[name]) {
-        portfolio = STRATEGIES[name](F);
-        renderLegs();
-        updateCharts();
+    if (!STRATEGIES[name]) return;
+    staging = STRATEGIES[name](F);
+    renderStaging();
+}
+
+function updateStagingField(idx, field, value) {
+    const leg = staging[idx];
+    if (!leg) return;
+    if (field === 'strike') {
+        const v = parseFloat(value);
+        if (!isNaN(v) && v > 0) leg.strike = v;
+    } else if (field === 'quantity') {
+        const v = parseInt(value);
+        if (!isNaN(v) && v > 0) leg.quantity = v;
+    } else {
+        leg[field] = value;
     }
+}
+
+function removeStaging(idx) {
+    staging.splice(idx, 1);
+    renderStaging();
+}
+
+function renderStaging() {
+    const c = $('staging-container');
+    const pushBtn = $('staging-push');
+    if (!c) return;
+
+    if (staging.length === 0) {
+        c.innerHTML = '';
+        if (pushBtn) pushBtn.style.display = 'none';
+        return;
+    }
+    if (pushBtn) pushBtn.style.display = '';
+
+    c.innerHTML = staging.map((leg, i) => `
+        <div class="stage-row">
+            <div class="stage-line">
+                <select onchange="updateStagingField(${i},'position',this.value)">
+                    <option value="long" ${leg.position === 'long' ? 'selected' : ''}>LONG</option>
+                    <option value="short" ${leg.position === 'short' ? 'selected' : ''}>SHORT</option>
+                </select>
+                <select onchange="updateStagingField(${i},'type',this.value)">
+                    <option value="call" ${leg.type === 'call' ? 'selected' : ''}>CALL</option>
+                    <option value="put" ${leg.type === 'put' ? 'selected' : ''}>PUT</option>
+                </select>
+                <button class="stage-rm" onclick="removeStaging(${i})">&times;</button>
+            </div>
+            <div class="stage-line mt-6">
+                <span class="stage-tag">K</span>
+                <input type="number" class="stage-k" value="${leg.strike}" step="0.5"
+                    oninput="updateStagingField(${i},'strike',this.value)">
+                <span class="stage-tag">QTY</span>
+                <input type="number" class="stage-q" value="${leg.quantity}" min="1" step="1"
+                    oninput="updateStagingField(${i},'quantity',this.value)">
+            </div>
+        </div>`).join('');
+}
+
+function pushStagingToPortfolio() {
+    if (staging.length === 0) return;
+    for (const leg of staging) {
+        portfolio.push({ type: leg.type, position: leg.position, strike: leg.strike, quantity: leg.quantity });
+    }
+    staging = [];
+    renderStaging();
+    renderLegs();
+    updateCharts();
 }
 
 function renderLegs() {
