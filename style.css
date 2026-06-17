@@ -42,9 +42,7 @@ body {
     height: 48px;
 }
 .header-left { display: flex; align-items: center; gap: 24px; }
-.header-title { font-size: 14px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; font-family: var(--mono); text-transform: uppercase; }
-.header-title .hl { color: var(--accent); }
-.header-title .dim { color: var(--text-dim); font-weight: 500; }
+.header-title { font-size: 14px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; font-family: var(--mono); text-transform: uppercase; color: #ffffff; }
 .header-meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; font-family: var(--mono); }
 
 /* ─── Tab Navigation ─── */
