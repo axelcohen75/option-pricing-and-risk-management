@@ -192,15 +192,8 @@ let _lastAutoStrike = null;
 function onFuturesChange() {
     const F = sliderVal('futures-price');
 
-    // Keep the plot window centered on F
-    const sMin = numVal('spot-min'), sMax = numVal('spot-max');
-    const width = sMax - sMin;
-    const pad = width * 0.10;
-    const outOfWindow = !isFinite(sMin) || !isFinite(sMax) || sMin >= sMax || F < sMin + pad || F > sMax - pad;
-    if (outOfWindow) {
-        $('spot-min').value = +(F * 0.5).toFixed(2);
-        $('spot-max').value = +(F * 1.5).toFixed(2);
-    }
+    // Keep the plot window wide enough for F and every strike
+    autoFitWindow();
 
     // Update new-strike default unless the user customised it
     const strikeEl = $('new-strike');
@@ -211,6 +204,26 @@ function onFuturesChange() {
             _lastAutoStrike = parseFloat(strikeEl.value);
         }
     }
+}
+
+// Expand the SPOT MIN/MAX window so F and every portfolio strike stay visible
+// (with margin). Only refits when the current window doesn't comfortably
+// contain them, so manual zoom is preserved otherwise.
+function autoFitWindow() {
+    const F = sliderVal('futures-price');
+    const pts = [F, ...portfolio.map(l => l.strike)].filter(v => isFinite(v) && v > 0);
+    if (pts.length === 0) return;
+    const lo = Math.min(...pts), hi = Math.max(...pts);
+
+    const sMin = numVal('spot-min'), sMax = numVal('spot-max');
+    const margin = isFinite(sMin) && isFinite(sMax) && sMax > sMin ? (sMax - sMin) * 0.04 : Infinity;
+    const contained = isFinite(sMin) && isFinite(sMax) && sMin < sMax
+        && lo >= sMin + margin && hi <= sMax - margin;
+    if (contained) return;
+
+    const pad = Math.max((hi - lo) * 0.5, F * 0.25, 1);
+    $('spot-min').value = +Math.max(0, lo - pad).toFixed(2);
+    $('spot-max').value = +(hi + pad).toFixed(2);
 }
 
 function resetEnv() {
@@ -235,19 +248,21 @@ function addLeg() {
         strike: parseFloat($('new-strike').value) || 100,
         quantity: parseInt($('new-qty').value) || 1,
     });
+    autoFitWindow();
     renderLegs();
     updateCharts();
 }
 
 function removeLeg(idx) {
     portfolio.splice(idx, 1);
+    autoFitWindow();
     renderLegs();
     updateCharts();
 }
 
 function updateLegStrike(idx, value) {
     const v = parseFloat(value);
-    if (!isNaN(v) && v > 0) { portfolio[idx].strike = v; updateCharts(); }
+    if (!isNaN(v) && v > 0) { portfolio[idx].strike = v; autoFitWindow(); updateCharts(); }
 }
 
 function clearLegs() {
@@ -329,6 +344,7 @@ function pushStagingToPortfolio() {
         portfolio.push({ type: leg.type, position: leg.position, strike: leg.strike, quantity: leg.quantity });
     }
     staging = [];
+    autoFitWindow();
     renderStaging();
     renderLegs();
     updateCharts();
