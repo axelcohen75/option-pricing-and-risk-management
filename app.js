@@ -4,11 +4,7 @@
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
-let portfolio = [
-    { type: 'call', position: 'long', strike: 284, quantity: 1 },
-    { type: 'put',  position: 'long', strike: 257, quantity: 1 },
-    { type: 'call', position: 'long', strike: 270, quantity: 1 },
-];
+let portfolio = [];
 let activeMetrics = ['delta'];
 
 const UNIT = '¢/lb';                       // ¢/lb
