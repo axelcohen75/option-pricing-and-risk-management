@@ -44,6 +44,15 @@ body {
 .header-left { display: flex; align-items: center; gap: 24px; }
 .header-title { font-size: 14px; font-weight: 700; letter-spacing: 2px; white-space: nowrap; font-family: var(--mono); text-transform: uppercase; color: #ffffff; }
 .header-meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; font-family: var(--mono); }
+.header-right { display: flex; align-items: center; gap: 18px; }
+.header-model {
+    font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 1px;
+    color: var(--text-dim); white-space: nowrap; text-transform: uppercase;
+}
+.header-model span {
+    color: var(--accent); margin-left: 6px; padding: 2px 8px; border-radius: 4px;
+    background: rgba(45,212,191,0.10); border: 1px solid rgba(45,212,191,0.30);
+}
 
 /* ─── Tab Navigation ─── */
 .tab-nav { display: flex; gap: 2px; background: var(--input-bg); border-radius: 6px; padding: 2px; }
