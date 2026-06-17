@@ -355,16 +355,12 @@ function renderLegs() {
     if (container) container.innerHTML = '';  // legacy hidden container
 }
 
-function updateLegIv(idx, value) {
-    const leg = portfolio[idx];
-    if (!leg) return;
-    const raw = (value ?? '').toString().trim();
-    if (raw === '') {
-        delete leg.iv;
-    } else {
-        const pct = parseFloat(raw);
-        if (!isNaN(pct) && pct > 0) leg.iv = pct / 100;
-    }
+// Flat Black-76 vol: editing the IV cell updates the single global sigma,
+// keeping pricing, greeks, surface and risk all on one consistent vol.
+function setGlobalIv(value) {
+    const v = parseFloat(value);
+    if (isNaN(v) || v <= 0) return;
+    setSlider('volatility', v.toFixed(1));
     updateCharts();
 }
 
@@ -607,25 +603,19 @@ function updateGreeksByLeg() {
     }
 
     const env = getEnv();
-    const globalVolPct = sliderVal('volatility');
+    const ivPct = sliderVal('volatility');   // flat Black-76 vol (same for all legs)
 
     tagsEl.innerHTML = portfolio.map((leg, i) => {
         const sign = leg.position === 'long' ? '+' : '-';
         const type = leg.type === 'call' ? 'CALL' : 'PUT';
         const g = computeGreeks(leg, env.F, env.r, env.sigma, env.T);
         const price = Math.abs(g.price || 0);
-        const hasIv = typeof leg.iv === 'number' && isFinite(leg.iv) && leg.iv > 0;
-        const ivVal = hasIv ? (leg.iv * 100).toFixed(1) : '';
         return `<span class="leg-tag">${sign}${leg.quantity} ${type} K=${leg.strike}
             <span class="tag-price">${price.toFixed(2)}</span>
-            <span class="tag-iv" title="IV override (blank = portfolio σ)">σ=<input type="number"
-                class="tag-iv-input${hasIv ? ' override' : ''}" value="${ivVal}" placeholder="${globalVolPct.toFixed(1)}"
-                min="0" step="0.5" onchange="updateLegIv(${i}, this.value)"
-                oninput="updateLegIv(${i}, this.value)">%</span>
             <span class="tag-close" onclick="removeLeg(${i})">&times;</span></span>`;
     }).join('');
 
-    const cols = ['Leg', 'Value', 'Delta', 'Gamma', 'Vega', 'Theta/d', 'Rho'];
+    const cols = ['Leg', 'IV (%)', 'Value', 'Delta', 'Gamma', 'Vega', 'Theta/d', 'Rho'];
     let rows = '';
     const totals = { price: 0, delta: 0, gamma: 0, vega: 0, theta: 0, rho: 0 };
 
@@ -641,12 +631,15 @@ function updateGreeksByLeg() {
 
         rows += `<tr>
             <td${style}>${label}</td>
+            <td><input type="number" class="iv-cell" value="${ivPct.toFixed(1)}" min="0"
+                onchange="setGlobalIv(this.value)" title="Black-76 flat vol — applies to all legs"></td>
             <td>${fmtG(g.price)}</td><td>${fmtG(g.delta, 4)}</td><td>${fmtG(g.gamma, 6)}</td>
             <td>${fmtG(g.vega, 4)}</td><td>${fmtG(g.theta, 4)}</td><td>${fmtG(g.rho, 4)}</td>
         </tr>`;
     }
     rows += `<tr class="row-total">
         <td>TOTAL</td>
+        <td></td>
         <td>${fmtG(totals.price)}</td><td>${fmtG(totals.delta, 4)}</td><td>${fmtG(totals.gamma, 6)}</td>
         <td>${fmtG(totals.vega, 4)}</td><td>${fmtG(totals.theta, 4)}</td><td>${fmtG(totals.rho, 4)}</td>
     </tr>`;

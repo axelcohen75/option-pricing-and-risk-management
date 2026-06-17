@@ -189,6 +189,17 @@ input[type="range"]::-moz-range-thumb {
 .greeks-leg-table td:first-child { text-align: left; font-weight: 600; }
 .greeks-leg-table .row-total td { font-weight: 700; color: var(--accent); border-top: 2px solid var(--accent); }
 
+/* Editable flat-IV cell (no spinner buttons) */
+.iv-cell {
+    width: 58px; text-align: right; font-size: 10.5px; font-family: var(--mono);
+    background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 4px;
+    color: var(--accent); font-weight: 600; padding: 2px 6px; outline: none;
+    -moz-appearance: textfield; appearance: textfield;
+}
+.iv-cell:focus { border-color: var(--accent); }
+.iv-cell::-webkit-inner-spin-button,
+.iv-cell::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
 /* ─── Chart containers ─── */
 .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; height: 42vh; min-height: 300px; }
 .chart-box { display: flex; flex-direction: column; min-height: 300px; }
