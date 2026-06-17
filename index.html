@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option Pricer & Risk Management — Black-76</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<div class="header">
+    <div class="header-left">
+        <div class="header-title"><span class="hl">///</span> OPTIONS DESK <span class="dim">PRICING &amp; RISK</span></div>
+        <div class="tab-nav">
+            <button class="tab-btn active">OPTIONS</button>
+        </div>
+    </div>
+    <div class="header-meta" id="header-clock">Updated — UTC</div>
+</div>
+
+<div class="tab-content active" id="tab-pricer">
+
+<div class="pricer-mode-bar">
+    <div class="pricer-mode-tabs">
+        <button class="pricer-mode-btn active">VANILLA OPTIONS</button>
+    </div>
+    <div class="pricer-mode-meta">BLACK&#8209;76 // OPTIONS ON FUTURES</div>
+</div>
+
+<!-- ─── Portfolio Legs tags + Greeks by Leg table ─── -->
+<div class="panel" style="margin:0 10px 8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="lbl" style="margin-bottom:0">PORTFOLIO LEGS <span class="leg-count" id="leg-count" style="margin-left:6px">0</span></div>
+        <div id="portfolio-leg-tags" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>
+    <div id="greeks-by-leg-table"></div>
+</div>
+<div id="legs-container" style="display:none"></div>
+
+<!-- ─── 2-column layout: sidebar + charts ─── -->
+<div class="pricer-grid">
+
+    <!-- ─── LEFT SIDEBAR ─── -->
+    <div class="pricer-sidebar">
+
+        <!-- Futures price display -->
+        <div class="panel">
+            <div class="lbl">FUTURE</div>
+            <div class="forward-result mt-8">
+                <div class="forward-value" id="futures-f-display" style="font-size:20px">—</div>
+            </div>
+            <div class="hint mt-8">Black-76 prices options directly on the futures price F — no underlying spot or cost-of-carry step.</div>
+        </div>
+
+        <!-- Parameters -->
+        <div class="panel">
+            <div class="lbl">PARAMETERS</div>
+            <div class="mt-10">
+                <div class="lbl lbl-sm">FUTURES PRICE F (¢/lb)</div>
+                <div class="slider-group">
+                    <input type="range" id="futures-price-slider" min="50" max="600" step="0.1" value="270.2">
+                    <input type="number" class="slider-input" id="futures-price-input" value="270.2" step="0.1">
+                </div>
+            </div>
+            <div class="mt-10">
+                <div class="lbl lbl-sm">EXPIRY T (YEARS)</div>
+                <div class="slider-group">
+                    <input type="range" id="time-to-expiry-slider" min="0.01" max="3" step="0.01" value="0.5">
+                    <input type="number" class="slider-input" id="time-to-expiry-input" value="0.50" step="0.01">
+                </div>
+            </div>
+            <div class="mt-10">
+                <div class="lbl lbl-sm">VOLATILITY &sigma; (%)</div>
+                <div class="slider-group">
+                    <input type="range" id="volatility-slider" min="1" max="150" step="0.5" value="34">
+                    <input type="number" class="slider-input" id="volatility-input" value="34.0" step="0.5">
+                </div>
+            </div>
+            <div class="mt-10">
+                <div class="lbl lbl-sm">RATE r (%)</div>
+                <div class="slider-group">
+                    <input type="range" id="risk-free-rate-slider" min="0" max="20" step="0.1" value="5">
+                    <input type="number" class="slider-input" id="risk-free-rate-input" value="5.0" step="0.1">
+                </div>
+            </div>
+            <div class="grid-2 mt-10">
+                <div>
+                    <div class="lbl lbl-sm">SPOT MIN</div>
+                    <input type="number" id="spot-min" value="135">
+                </div>
+                <div>
+                    <div class="lbl lbl-sm">SPOT MAX</div>
+                    <input type="number" id="spot-max" value="405">
+                </div>
+            </div>
+            <button class="btn btn-ghost btn-full mt-12" onclick="resetEnv()">RESET</button>
+        </div>
+
+        <!-- Strategies -->
+        <div class="panel">
+            <div class="lbl">STRATEGIES</div>
+            <div class="flex-row mt-8">
+                <div class="flex-1"><select id="strategy-select"></select></div>
+                <button class="btn btn-accent" onclick="applyStrategy()">APPLY</button>
+            </div>
+        </div>
+
+        <!-- New Position -->
+        <div class="panel">
+            <div class="lbl">NEW POSITION</div>
+            <div class="grid-2 mt-8">
+                <div>
+                    <div class="lbl lbl-sm">TYPE</div>
+                    <select id="new-type">
+                        <option value="call">CALL</option>
+                        <option value="put">PUT</option>
+                    </select>
+                </div>
+                <div>
+                    <div class="lbl lbl-sm">POSITION</div>
+                    <select id="new-position">
+                        <option value="long">LONG</option>
+                        <option value="short">SHORT</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid-2 mt-8">
+                <div>
+                    <div class="lbl lbl-sm">STRIKE (K)</div>
+                    <input type="number" id="new-strike" value="270" step="0.5">
+                </div>
+                <div>
+                    <div class="lbl lbl-sm">QUANTITY</div>
+                    <input type="number" id="new-qty" value="1" min="1" step="1">
+                </div>
+            </div>
+            <button class="btn btn-accent btn-full mt-12" onclick="addLeg()">ADD LEG</button>
+            <button class="btn btn-danger btn-full mt-8" style="font-size:10px;padding:6px" onclick="clearLegs()">CLEAR ALL</button>
+        </div>
+
+    </div>
+
+    <!-- ─── CHARTS AREA ─── -->
+    <div class="pricer-charts">
+
+        <!-- Top row: Payoff + Greeks -->
+        <div class="charts-row">
+            <div class="chart-box">
+                <div class="panel">
+                    <div class="chart-header">
+                        <div><div class="lbl" style="font-size:12px;margin-bottom:0">PAYOFF DIAGRAM</div></div>
+                    </div>
+                    <div id="payoff-chart" class="chart-plot"></div>
+                </div>
+            </div>
+
+            <div class="chart-box">
+                <div class="panel">
+                    <div class="chart-header">
+                        <div>
+                            <div class="lbl" style="font-size:12px;margin-bottom:0">GREEKS ANALYTICS</div>
+                            <div class="sub-label" id="greeks-subtitle">DELTA</div>
+                        </div>
+                        <div class="greek-quick-btns" id="greek-quick-btns">
+                            <button class="greek-qbtn active" onclick="quickGreek('delta')">Delta</button>
+                            <button class="greek-qbtn" onclick="quickGreek('gamma')">Gamma</button>
+                            <button class="greek-qbtn" onclick="quickGreek('vega')">Vega</button>
+                            <button class="greek-qbtn" onclick="quickGreek('theta')">Theta</button>
+                            <button class="greek-qbtn" onclick="quickGreek('rho')">Rho</button>
+                        </div>
+                    </div>
+                    <div id="greeks-chart" class="chart-plot"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom row: 3D Surface + Theta Decay -->
+        <div class="charts-row">
+            <div class="chart-box">
+                <div class="panel">
+                    <div class="chart-header">
+                        <div>
+                            <div class="lbl" style="font-size:12px;margin-bottom:0">3D GREEK SURFACE</div>
+                            <div class="sub-label" id="surface-subtitle">DELTA</div>
+                        </div>
+                        <div class="flex-row">
+                            <select id="surface-greek" style="width:90px;font-size:9px" onchange="generateSurface()">
+                                <option value="delta">Delta</option>
+                                <option value="gamma">Gamma</option>
+                                <option value="vega">Vega</option>
+                                <option value="theta">Theta</option>
+                                <option value="rho">Rho</option>
+                                <option value="price">Price</option>
+                            </select>
+                            <select id="surface-axis" style="width:90px;font-size:9px" onchange="generateSurface()">
+                                <option value="volatility">vs Vol</option>
+                                <option value="time_to_expiry">vs Time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="surface-chart" class="chart-plot"></div>
+                </div>
+            </div>
+
+            <div class="chart-box">
+                <div class="panel">
+                    <div class="chart-header">
+                        <div><div class="lbl" style="font-size:12px;margin-bottom:0">THETA DECAY</div></div>
+                    </div>
+                    <div id="theta-chart" class="chart-plot"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ RISK MANAGEMENT SECTION ═══ -->
+<div class="panel" style="margin:8px 10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div class="lbl" style="font-size:13px;margin-bottom:0"><span class="hl">///</span> RISK MANAGEMENT</div>
+        <div style="display:flex;gap:12px;align-items:center">
+            <div>
+                <span class="lbl lbl-sm">CONFIDENCE</span>
+                <select id="risk-confidence" style="width:70px;font-size:10px">
+                    <option value="0.95">95%</option>
+                    <option value="0.99" selected>99%</option>
+                </select>
+            </div>
+            <div>
+                <span class="lbl lbl-sm">HORIZON (DAYS)</span>
+                <input type="number" id="risk-horizon" value="10" min="1" max="252" step="1" style="width:60px">
+            </div>
+            <div>
+                <span class="lbl lbl-sm">MC SIMS</span>
+                <input type="number" id="risk-mc-sims" value="10000" min="1000" max="100000" step="1000" style="width:80px">
+            </div>
+            <button class="btn btn-accent" onclick="runRiskAnalysis()">RUN</button>
+        </div>
+    </div>
+    <div class="risk-grid mt-10">
+        <div class="risk-left">
+            <div id="risk-var-table"></div>
+            <div style="display:flex;gap:10px;margin-top:10px">
+                <div id="risk-cvar-table" style="flex:1"></div>
+                <div id="risk-drawdown-table" style="flex:1"></div>
+            </div>
+        </div>
+        <div class="risk-right">
+            <div class="lbl" style="font-size:11px;margin-bottom:4px">MC P&amp;L DISTRIBUTION</div>
+            <div id="risk-mc-chart" class="chart-plot" style="height:260px"></div>
+        </div>
+    </div>
+    <div id="risk-stress-table" class="mt-10"></div>
+</div>
+
+</div><!-- /#tab-pricer -->
+
+<div class="footer">Black-76 options-on-futures · Greeks &amp; risk computed client-side · Monte Carlo VaR / CVaR / drawdown · Stress scenarios</div>
+
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
